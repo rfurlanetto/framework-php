@@ -1,0 +1,64 @@
+version: '3'
+services:
+  
+  #PHP Service
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: php
+    container_name: framework-back
+    # restart: unless-stopped
+    # tty: true
+    environment:
+      SERVICE_NAME: app
+      SERVICE_TAGS: dev
+    working_dir: /var/www
+    volumes:
+      - ./:/var/www
+      - ./php/local.ini:/usr/local/etc/php/conf.d/local.ini
+    networks:
+      - app-framework
+
+  #Nginx Service
+  webserver:
+    image: nginx:alpine
+    container_name: framework-webserver-manual
+    # restart: unless-stopped
+    # tty: true
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./:/var/www
+      - ./nginx/conf.d/:/etc/nginx/conf.d/
+    networks:
+      - app-framework
+
+  #MySQL Service
+  db:
+    image: mysql
+    container_name: db-framework-manual
+    # restart: unless-stopped
+    # tty: true
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_DATABASE: framework
+      MYSQL_ROOT_PASSWORD: framework_root
+      SERVICE_TAGS: dev
+      SERVICE_NAME: mysql
+    volumes:
+      - dbdata:/var/lib/mysql/
+      - ./mysql/my.cnf:/etc/mysql/my.cnf
+    networks:
+      - app-framework
+
+#Docker Networks
+networks:
+  app-framework:
+    driver: bridge
+#Volumes
+volumes:
+  dbdata:
+    driver: local
